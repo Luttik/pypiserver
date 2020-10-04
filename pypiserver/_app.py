@@ -18,20 +18,9 @@ from .bottle import (
     template,
 )
 
-try:
-    import xmlrpc.client as xmlrpclib  # py3
-except ImportError:
-    import xmlrpclib  # py2
+import xmlrpc.client as xmlrpclib
 
-try:
-    from io import BytesIO
-except ImportError:
-    from StringIO import StringIO as BytesIO
-
-try:  # PY3
-    from urllib.parse import urljoin, urlparse
-except ImportError:  # PY2
-    from urlparse import urljoin, urlparse
+from io import BytesIO
 
 
 log = logging.getLogger(__name__)
@@ -174,7 +163,7 @@ def file_upload():
     ):
         raise HTTPError(
             400,
-            "Unrelated signature %r for package %r!" % (ufiles.sig, ufiles.pkg)
+            "Unrelated signature %r for package %r!" % (ufiles.sig, ufiles.pkg),
         )
 
     for uf in ufiles:

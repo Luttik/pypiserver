@@ -4,10 +4,7 @@ import sys
 
 from setuptools import setup
 
-if sys.version_info >= (3, 0):
-    exec("def do_exec(co, loc): exec(co, loc)\n")
-else:
-    exec("def do_exec(co, loc): exec co in loc\n")
+exec("def do_exec(co, loc): exec(co, loc)\n")
 
 tests_require = [
     "pytest>=2.3",
@@ -17,14 +14,9 @@ tests_require = [
     "passlib>=1.6",
     "webtest",
 ]
-if sys.version_info == (2, 7):
-    tests_require.append("mock")
 
 setup_requires = ["setuptools", "setuptools-git >= 0.3"]
-if sys.version_info >= (3, 5):
-    setup_requires.append("wheel >= 0.25.0")  # earlier wheels fail in 3.5
-else:
-    setup_requires.append("wheel")
+setup_requires.append("wheel >= 0.25.0")  # earlier wheels fail in 3.5
 
 
 def get_version():
@@ -43,7 +35,7 @@ setup(
     version=get_version(),
     packages=["pypiserver"],
     package_data={"pypiserver": ["welcome.html"]},
-    python_requires=">=2.7, !=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*",
+    python_requires=">=3.6",
     setup_requires=setup_requires,
     extras_require={"passlib": ["passlib>=1.6"], "cache": ["watchdog"]},
     tests_require=tests_require,
@@ -64,10 +56,6 @@ setup(
         "Operating System :: Microsoft :: Windows",
         "Operating System :: POSIX",
         "Operating System :: OS Independent",
-        "Programming Language :: Python :: 2",
-        "Programming Language :: Python :: 2.7",
-        "Programming Language :: Python :: 3",
-        "Programming Language :: Python :: 3.5",
         "Programming Language :: Python :: 3.6",
         "Programming Language :: Python :: 3.7",
         "Programming Language :: Python :: 3.8",

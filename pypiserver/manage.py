@@ -12,48 +12,11 @@ import pip
 
 from . import core
 
-if sys.version_info >= (3, 0):
-    from xmlrpc.client import Server
+from xmlrpc.client import Server
 
-    def make_pypi_client(url):
-        return Server(url)
-else:
-    from xmlrpclib import Transport  # @UnresolvedImport
-    from xmlrpclib import ServerProxy
-    import httplib  # @UnresolvedImport
-    import urllib
 
-    class ProxiedTransport(Transport):
-
-        def set_proxy(self, proxy):
-            self.proxy = proxy
-
-        def make_connection(self, host):
-            self.realhost = host
-            if sys.hexversion < 0x02070000:
-                _http_connection = httplib.HTTP
-            else:
-                _http_connection = httplib.HTTPConnection
-            return _http_connection(self.proxy)
-
-        def send_request(self, connection, handler, request_body):
-            connection.putrequest(
-                "POST", 'http://%s%s' % (self.realhost, handler))
-
-        def send_host(self, connection, host):
-            connection.putheader('Host', self.realhost)
-
-    def make_pypi_client(url):
-        http_proxy_url = urllib.getproxies().get("http", "")
-
-        if http_proxy_url:
-            http_proxy_spec = urllib.splithost(
-                urllib.splittype(http_proxy_url)[1])[0]
-            transport = ProxiedTransport()
-            transport.set_proxy(http_proxy_spec)
-        else:
-            transport = None
-        return ServerProxy(url, transport=transport)
+def make_pypi_client(url):
+    return Server(url)
 
 
 def is_stable_version(pversion):
@@ -92,9 +55,7 @@ def build_releases(pkg, versions):
     for x in versions:
         parsed_version = core.parse_version(x)
         if parsed_version > pkg.parsed_version:
-            yield core.PkgFile(pkgname=pkg.pkgname,
-                               version=x,
-                               replaces=pkg)
+            yield core.PkgFile(pkgname=pkg.pkgname, version=x, replaces=pkg)
 
 
 def find_updates(pkgset, stable_only=True):
@@ -108,7 +69,8 @@ def find_updates(pkgset, stable_only=True):
     latest_pkgs = frozenset(filter_latest_pkgs(pkgset))
 
     sys.stdout.write(
-        "checking %s packages for newer version\n" % len(latest_pkgs),)
+        "checking %s packages for newer version\n" % len(latest_pkgs),
+    )
     need_update = set()
 
     pypi = make_pypi_client("https://pypi.org/pypi/")
@@ -135,8 +97,10 @@ def find_updates(pkgset, stable_only=True):
     write("\n\n")
 
     if no_releases:
-        sys.stdout.write("no releases found on pypi for %s\n\n" %
-                         (", ".join(sorted(no_releases)),))
+        sys.stdout.write(
+            "no releases found on pypi for %s\n\n"
+            % (", ".join(sorted(no_releases)),)
+        )
 
     return need_update
 
@@ -148,20 +112,25 @@ class PipCmd(object):
     def update_root(pip_version):
         """Yield an appropriate root command depending on pip version."""
         # legacy_pip = StrictVersion(pip_version) < StrictVersion('10.0')
-        legacy_pip = LooseVersion(pip_version) < LooseVersion('10.0')
-        for part in ('pip', '-q'):
+        legacy_pip = LooseVersion(pip_version) < LooseVersion("10.0")
+        for part in ("pip", "-q"):
             yield part
-        yield 'install' if legacy_pip else 'download'
+        yield "install" if legacy_pip else "download"
 
     @staticmethod
-    def update(cmd_root, destdir, pkg_name, pkg_version,
-               index='https://pypi.org/simple'):
+    def update(
+        cmd_root,
+        destdir,
+        pkg_name,
+        pkg_version,
+        index="https://pypi.org/simple",
+    ):
         """Yield an update command for pip."""
         for part in cmd_root:
             yield part
-        for part in ('--no-deps', '-i', index, '-d', destdir):
+        for part in ("--no-deps", "-i", index, "-d", destdir):
             yield part
-        yield '{}=={}'.format(pkg_name, pkg_version)
+        yield "{}=={}".format(pkg_name, pkg_version)
 
 
 def update_package(pkg, destdir, dry_run=False):
@@ -176,7 +145,7 @@ def update_package(pkg, destdir, dry_run=False):
             PipCmd.update_root(pip.__version__),
             destdir or os.path.dirname(pkg.replaces.fn),
             pkg.pkgname,
-            pkg.version
+            pkg.version,
         )
     )
 
@@ -200,15 +169,22 @@ def update(pkgset, destdir=None, dry_run=False, stable_only=True):
         update_package(pkg, destdir, dry_run=dry_run)
 
 
-def update_all_packages(roots, destdir=None, dry_run=False, stable_only=True, blacklist_file=None):
+def update_all_packages(
+    roots, destdir=None, dry_run=False, stable_only=True, blacklist_file=None
+):
     all_packages = itertools.chain(*[core.listdir(r) for r in roots])
 
     skip_packages = set()
     if blacklist_file:
         skip_packages = set(core.read_lines(blacklist_file))
-        print('Skipping update of blacklisted packages (listed in "{}"): {}'
-              .format(blacklist_file, ', '.join(sorted(skip_packages))))
+        print(
+            'Skipping update of blacklisted packages (listed in "{}"): {}'.format(
+                blacklist_file, ", ".join(sorted(skip_packages))
+            )
+        )
 
-    packages = frozenset([pkg for pkg in all_packages if pkg.pkgname not in skip_packages])
+    packages = frozenset(
+        [pkg for pkg in all_packages if pkg.pkgname not in skip_packages]
+    )
 
     update(packages, destdir, dry_run, stable_only)

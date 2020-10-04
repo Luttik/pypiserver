@@ -8,6 +8,7 @@ from os.path import dirname
 from watchdog.observers import Observer
 import threading
 
+
 class CacheManager(object):
     """
         A naive cache implementation for listdir and digest_file
@@ -85,8 +86,8 @@ class CacheManager(object):
         self.watched.add(root)
         self.observer.schedule(_EventHandler(self, root), root, recursive=True)
 
-class _EventHandler(object):
 
+class _EventHandler(object):
     def __init__(self, cache, root):
         self.cache = cache
         self.root = root
@@ -106,7 +107,7 @@ class _EventHandler(object):
         # Digests are more expensive: invalidate specific paths
         paths = []
 
-        if event.event_type == 'moved':
+        if event.event_type == "moved":
             paths.append(event.src_path)
             paths.append(event.dest_path)
         else:
@@ -116,5 +117,6 @@ class _EventHandler(object):
             for _, subcache in cache.digest_cache.items():
                 for path in paths:
                     subcache.pop(path, None)
+
 
 cache_manager = CacheManager()
